@@ -2,152 +2,144 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Fabrik2D : MonoBehaviour
-{
-    // input
-    public Vector2[] inputPositions; // "P" holds all joints AS WELL AS the target location
-    public Transform target;
+public class FABRIK2D : MonoBehaviour
+{ 
+    public bool useTransformsToGenerate;
+    public Transform[] inputTransforms;
+    Vector3 transfer;
 
-    // output
-    Vector2[] finalPositions; // holds the positions of all joints WINTHOUT the final position
+    public Vector2[] IP;
+    float[] lengths; // one less than the length of IP
+    Vector2 targetPos;
+    Vector2 basePos;
+    public Transform targetTrans;
 
-    // Variables
-    //Vector2 targetPos; //this is the final joint in the inputPositions
-    float distToTarget;
-    float maxLength; // max outstreched length of the chain
-    float tolerance = 0.05f; // 5% tolerance of error
-    public float[] distances; // distances between all joints WITHOUT the target location
+    public float tolerance = 0.05f;
 
-    float[] r;
-    float[] lambda;
-    Vector2 b;
-    float dif;
-
-    void CalculateDistances() // populate the distance array with the proper lengths of the segments
+    float targetDistFromRoot; 
+    float chainLength; // Set in start
+    int maxIterations = 4;
+    float diff; // the distance between the end effector and the target
+    float lambda;
+    void Start()
     {
-        distances = new float[inputPositions.Length - 2];
-        for (int i = 0; i < distances.Length; i++)
+        UseInputTransforms();
+        CalcLengths();
+        CalcChainLength();
+    }
+
+    void UseInputTransforms()
+    {
+        if (useTransformsToGenerate)
         {
-            distances[i] = (inputPositions[i + 1] - inputPositions[i]).magnitude; // the distance between the current joint and the next joint not including the target
+            IP = new Vector2[inputTransforms.Length];
+
+            for (int i = 0; i < inputTransforms.Length; i++)
+            {
+                IP[i].x = inputTransforms[i].position.x;
+                IP[i].y = inputTransforms[i].position.y;
+            }
         }
     }
-    void SetTarget()
+    void CalcLengths()
     {
-        Vector2[] tempArray = inputPositions; // make a temp array to hold all the inputPosition data
-        inputPositions = new Vector2[tempArray.Length + 1]; // add 1 length to inputPositions to hold the target
-        for (int i = 0; i < tempArray.Length; i++)
+        lengths = new float[IP.Length - 1];
+        for(int i = 0; i < lengths.Length; i++)
         {
-            inputPositions[i] = tempArray[i];
+            lengths[i] = (IP[i + 1] - IP[i]).magnitude;
         }
-
-        UpdateTarget();
     }
-    void UpdateTarget()
+    void CalcChainLength()
     {
-        Vector2 tempPos;
-        tempPos.x = target.position.x;
-        tempPos.y = target.position.y;
-        inputPositions[^1] = tempPos;
-    }
-    float TargetDistance() // takes the distance from the root to the target and records it
-    {
-        return (inputPositions[^1] - inputPositions[0]).magnitude; // the length of a vector from root to target
-    }
-
-    // Only needs to be set once
-    float MaxChainLength()
-    {
-        float lengthTemp = 0f;
-        for (int i = 0; i < distances.Length; i++)
+        //Calculate Max length  
+        chainLength = 0f;
+        for (int i = 0; i < lengths.Length; i++)
         {
-            lengthTemp += distances[i];          
+            chainLength += lengths[i];
         }
-        //Debug.Log("Max Chain Length: " + lengthTemp);
-        return lengthTemp;
     }
-    
-    // FABRIK
+    void CheckTargetDistance()
+    {
+        targetDistFromRoot = (targetPos - IP[0]).magnitude; // set the distance of the root to target to the mag of a vector between the two
+    }
     void FABRIK()
     {
-        if (distToTarget > maxLength)
+        targetPos = (Vector2)targetTrans.position;
+        CheckTargetDistance();
+
+        if (targetDistFromRoot > chainLength + tolerance)
         {
-            return; // THIS NEEDS TO BE REMOVED
-            // find new joint positions
-            for (int i = 0; i < distances.Length; i++) // AAAAAAH
+            Vector2 rayToTarget = targetPos - IP[0];
+            for (int j = 0; j < lengths.Length; j++)
             {
-                r[i] = (inputPositions[^1] - inputPositions[i]).magnitude;
-                lambda[i] = distances[i] / r[i];
-                //find the new joint positions
-                inputPositions[i + 1] = ((1f - lambda[i]) * inputPositions[i]) + (lambda[i] * inputPositions[^1]);
+                IP[j+1] = IP[j] + lengths[j] * rayToTarget.normalized;
             }
         }
         else
         {
-            //the target is reachable
-            b = inputPositions[0];
-            dif = (inputPositions[^2] - inputPositions[^1]).magnitude;
-            while (dif > (tolerance * maxLength))
+            for (int i = 0; i < maxIterations; i++) // the 'while' loop replacing the tolerance bs
             {
-                //forawardreaching
-                inputPositions[^2] = inputPositions[^1]; //set the end effector as the target
-                for (int i = 0; i < inputPositions.Length - 2; i++) // AAAAAH
-                {
-                    r[i] = (inputPositions[i + 1] - inputPositions[i]).magnitude;
-                    lambda[i] = distances[i] / r[i]; 
-                    Debug.Log(lambda[i]); //DEBUG
-                    //find new positions
-                    inputPositions[i] = ((1f - lambda[i]) * inputPositions[i+1]) + (lambda[i] * inputPositions[i]);
-                }
+                // Perform forward backward while the end efector is not within the range of target
 
-                inputPositions[0] = b;
-                for (int k = 0; k < inputPositions.Length - 2; k++)
+                //set root position
+                basePos = IP[0];
+                //check if the end effector is within the tolerance of the target
+                diff = (targetPos - IP[^1]).magnitude;
+                    //STAGE 1 forward
+                IP[^1] = targetPos;
+                //find the dstance between the new joint and the -1 joint
+                for (int p = lengths.Length-1; p > 0; p--)
                 {
-                    r[k] = (inputPositions[k + 1] - inputPositions[k]).magnitude;
-                    lambda[k] = distances[k] / r[k];
-                    inputPositions[k + 1] = ((1f - lambda[k]) * inputPositions[k+1]) + (lambda[k] * inputPositions[k]);
+                    Vector2 ray = IP[p + 1] - IP[p]; //ray from last to joint to next joint
+                    lambda = lengths[p] / ray.magnitude;
+                    //IP[p] = IP[p+1] + ((1f - lambda) * ray); // find the new position
+                    IP[p] = ((1f - lambda) * IP[p + 1]) + (lambda * IP[p]);
 
                 }
-                dif = (inputPositions[^2] - inputPositions[^1]).magnitude;
+                //stage 2 Backwards
+                IP[0] = basePos;
+                for(int k = 0; k < lengths.Length;  k++)
+                {
+                    Vector2 ray = IP[k + 1] - IP[k]; //ray from next joint to joint
+                    lambda = lengths[k] / ray.magnitude;
+                    //IP[k + 1] = IP[k] + ((1f - lambda) * ray);
+                    IP[k + 1] = ((1f - lambda) * IP[k]) + (lambda * IP[k + 1]);
+                }
+                diff = (targetPos - IP[^1]).magnitude;
+                if (diff < tolerance)
+                    return;
             }
         }
+            
     }
-    // Start is called before the first frame update
-    void Start()
-    {
-        //belongs in start
-        SetTarget();
-        CalculateDistances(); //populates distances
-
-        FloatInit();
-        //move these
-        distToTarget = TargetDistance();
-        maxLength = MaxChainLength();
-
-              
-    }
-
     // Update is called once per frame
     void Update()
     {
-
-        UpdateTarget();
-
         FABRIK();
-
-        DrawDebugLines();   
+        if(!useTransformsToGenerate)    
+            DrawDebugLines();
+        Transfer();
     }
 
-    void FloatInit()
+    void Transfer()
     {
-        r = new float[distances.Length];
-        lambda = new float[distances.Length];
+        transfer.z = 0;
+        for (int i = 0; i < inputTransforms.Length; i++)
+        {
+            transfer.x = IP[i].x;
+            transfer.y = IP[i].y;
+            inputTransforms[i].position = transfer;
+        }
     }
     void DrawDebugLines()
     {
-        for (int i = 0; i < distances.Length; i++)
+        for (int i = 0; i < lengths.Length; i++)
         {
-            Debug.DrawLine((Vector3)inputPositions[i], (Vector3)inputPositions[i + 1], Color.red);
+            Color color = new Color(
+            Random.Range(0f, 1f),
+            Random.Range(0f, 1f),
+            Random.Range(0f, 1f));
+            Debug.DrawLine((Vector3)IP[i], (Vector3)IP[i + 1], color);
         }
-        Debug.DrawLine((Vector3)inputPositions[^2], (Vector3)inputPositions[^1], Color.red);
     }
 }
