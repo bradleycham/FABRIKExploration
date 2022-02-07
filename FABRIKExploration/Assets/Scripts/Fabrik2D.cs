@@ -116,9 +116,10 @@ public class FABRIK2D : MonoBehaviour
     void Update()
     {
         FABRIK();
-        if(!useTransformsToGenerate)    
-            DrawDebugLines();
         Transfer();
+        //MoveRoot();
+        DrawDebugLines();
+
     }
 
     void Transfer()
@@ -131,6 +132,19 @@ public class FABRIK2D : MonoBehaviour
             inputTransforms[i].position = transfer;
         }
     }
+    //this function will add the position of the root to the array of positions
+    void MoveRoot()
+    {
+        Vector3 offset = new Vector3();
+        offset.x = inputTransforms[0].position.x;
+        offset.y = inputTransforms[0].position.y;
+        offset.y = 0f;
+        for (int i = 0; i < inputTransforms.Length; i++)
+        {           
+            inputTransforms[i].position = new Vector3(IP[i].x, IP[i].y, 0.0f) + offset;
+        }
+        //targetTrans.position = new Vector3(IP[^1].x, IP[^1].y, 0.0f) + offset; ;
+    }
     void DrawDebugLines()
     {
         for (int i = 0; i < lengths.Length; i++)
@@ -139,7 +153,10 @@ public class FABRIK2D : MonoBehaviour
             Random.Range(0f, 1f),
             Random.Range(0f, 1f),
             Random.Range(0f, 1f));
-            Debug.DrawLine((Vector3)IP[i], (Vector3)IP[i + 1], color);
+            if(!useTransformsToGenerate)
+                Debug.DrawLine((Vector3)IP[i], (Vector3)IP[i + 1], color);
+            else
+                Debug.DrawLine((Vector3)inputTransforms[i].position, (Vector3)inputTransforms[i + 1].position, color);
         }
     }
 }
