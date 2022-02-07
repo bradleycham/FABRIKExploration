@@ -2,7 +2,7 @@
 #
 # Get latest from https://github.com/github/gitignore/blob/main/Unity.gitignore
 #
-./FABRIKExploration/[Ll]ibrary/
+FABRIKExploration/[Ll]ibrary/*
 FABRIKExploration/[Tt]emp/
 FABRIKExploration/[Oo]bj/
 FABRIKExploration/[Bb]uild/
