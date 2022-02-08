@@ -22,7 +22,7 @@ public class FABRIK3D : MonoBehaviour
 
     float targetDistFromRoot;
     float chainLength; // Set in start
-    int maxIterations = 4;
+    int maxIterations = 10;
     float diff; // the distance between the end effector and the target
     float lambda;
     void Start()
@@ -91,13 +91,37 @@ public class FABRIK3D : MonoBehaviour
                 diff = (targetPos - IP[^1]).magnitude;
                 //STAGE 1 forward
                 IP[^1] = targetPos;
+
+                bool isASubBase = false;
+                SubBase sub;
                 //find the dstance between the new joint and the -1 joint
                 for (int p = lengths.Length - 1; p > 0; p--)
                 {
-                    Vector3 ray = IP[p + 1] - IP[p]; //ray from last to joint to next joint
-                    lambda = lengths[p] / ray.magnitude;
-                    //IP[p] = IP[p+1] + ((1f - lambda) * ray); // find the new position
-                    IP[p] = ((1f - lambda) * IP[p + 1]) + (lambda * IP[p]);
+                    for (int si = 0; si < subBases.Length; si++)
+                    {
+                        if (subBases[si].index == p)
+                        {
+                            isASubBase = true;
+                            sub = subBases[si];
+                            SubFabrik(sub);
+                            break;
+                        }
+                            
+                    }
+                    if(isASubBase)
+                    {
+                        
+                        
+                        //SubFabrik
+                    }
+                    else
+                    {
+                        Vector3 ray = IP[p + 1] - IP[p]; //ray from last to joint to next joint
+                        lambda = lengths[p] / ray.magnitude;
+                        //IP[p] = IP[p+1] + ((1f - lambda) * ray); // find the new position
+                        IP[p] = ((1f - lambda) * IP[p + 1]) + (lambda * IP[p]);
+                    }
+                    
 
                 }
                 //stage 2 Backwards
@@ -114,6 +138,71 @@ public class FABRIK3D : MonoBehaviour
                     return;
             }
         }
+
+    }
+
+    void SubFabrik(SubBase sub, bool backward) //returns the location of the subbase take in all of these and find the centroid
+    {
+        Vector3[] outputSubs = new Vector3[sub.subChains.Length]; // the amount of different locations that the sub base was moved to
+        
+        Transform[] subChain;
+        Transform subTarget;
+        Vector3 subBasePos;
+        float[] subLengths;
+        for (int sc = 0; sc < sub.subChains.Length; sc ++)
+        {
+            // for each subchain, perform Ik
+            subChain = sub.subChains[sc].SBTrans;
+            subTarget = sub.subChains[sc].target;
+            subLengths = sub.subChains[sc].SBLenghts;
+            //iterate through the subchains and perform ik on them, then find the centroid of the subBase
+            for (int i = 0; i < maxIterations; i++) // the 'while' loop replacing the tolerance bs
+            {
+                // Perform forward backward while the end efector is not within the range of target
+
+                //set root position
+                subBasePos = subChain[0].position;
+                //check if the end effector is within the tolerance of the target
+                diff = (sub.subChains[sc].target.position - subChain[^1].position).magnitude;
+                //STAGE 1 forward
+                subChain[^1].position = subTarget.position;
+                //find the dstance between the new joint and the -1 joint
+                for (int p = subLengths.Length - 1; p > 0; p--)
+                {
+                    Vector3 ray = subChain[p + 1].position - subChain[p].position; //ray from last to joint to next joint
+                    lambda = subLengths[p] / ray.magnitude;
+                    subChain[p].position = ((1f - lambda) * subChain[p + 1].position) + (lambda * subChain[p].position);
+
+                }
+                //stage 2 Backwards
+                subChain[0].position = subBasePos;
+                for (int k = 0; k < subLengths.Length; k++)
+                {
+                    Vector3 ray = subChain[k + 1].position - subChain[k].position; //ray from next joint to joint
+                    lambda = subLengths[k] / ray.magnitude;
+                    IP[k + 1] = ((1f - lambda) * subChain[k].position) + (lambda * subChain[k + 1].position);
+                }
+                diff = (subTarget.position - subChain[^1].position).magnitude;
+                if (diff < tolerance)
+                {
+                    outputSubs[sc] = sub.subChains[sc].SBTrans[0].position;
+                    break;
+                }
+                
+            }
+            outputSubs[sc] = sub.subChains[sc].SBTrans[0].position;
+        }
+
+        // calc centroid
+        Vector3 centroid = new Vector3();
+        for(int j = 0; j < outputSubs.Length; j++)
+        {
+            centroid += outputSubs[j];
+        }
+        centroid /= outputSubs.Length;
+        sub.transform.position = centroid;
+
+        
 
     }
     // Update is called once per frame
