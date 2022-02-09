@@ -1,0 +1,85 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Project Details</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">FABRIK</a>
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						<li><a href="generic.html" class="active">Project Details</a></li>
+						
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper">
+						<div class="inner">
+							<h1 class="major">Project Details</h1>
+							<span class="image fit"><img src="images/SomeoneStopMe.JPG" alt="" /></span>
+							<p></p>
+							<h3>Project Goal</h3>
+							<p>The goal of this project was to demonstrate my understanding of the FABRIK inverse kinematic solver. 
+								FABRIK is an acronym for Forward And Backward Reaching Inverse Kinematics. Using this Heuristic method developed at the university of 
+								Cambridge, I can solve animation, graphical, and physics simulation problems with a very fast and lifelike method. The algorithm is so 
+								efficient due to the massive reduction in rotation and Matrix mathematics involved in other methods. 
+								Using this method it has been shown that we can solve 2D and 3D IK problems in a fraction of the time that other methods take.
+								This method is also highly scalable and can be improved to accomidate mulitiple end effectors, as my system demontstates, as well
+								more complex problems like constrained movement.</p>
+								<h3>Challenges</h3>
+								<p>While the algorithm itself involves relatively little code compared to other implementations of inverse Kinematics
+									the largest challenge came with understanding the algorithm on a level where I am able to implement a feasible system
+									in Unity. After reading the in-depth article and studying the pseudocode, I was able to get the basic 
+									algorithm implemented in about 2 afternoons. The real challenge in my understanding came when I began implementing multiple end effectors.
+									This problem had me scratching my head for a couple days. After returning to the basics of the algorithm, breaking it apart piece by piece,
+									and getting to know the individual sequences by heart, I was able to make an effective prototype of the Multiple end effector model of this algorithm.
+								</p>
+								<h3>Implementation</h3>
+								<p>The uses of this algorithm are only limeted by the imagination of the designer using it. Some of the places I anticipate using this
+									code in my other work is as an ambient setpiece in a 2D game I am developing. The chains of this fabrik model will sway as leaves, grass, 
+									vines, or seaweed in the fore and background to bring life to the game. With some more expansion, I am interested in creating a cloth 
+									simulation that runs very quickly. With more improvement to the system, I could even animate limbs and creatures in 3d games. When Contraints
+									are added I will even be able to simulate VR limbs.
+								</p>
+						</div>
+					</section>
+
+			</div>
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

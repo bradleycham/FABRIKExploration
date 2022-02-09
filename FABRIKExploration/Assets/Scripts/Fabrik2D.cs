@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class FABRIK2D : MonoBehaviour
+public class Fabrik2D : MonoBehaviour
 { 
     public bool useTransformsToGenerate;
     public Transform[] inputTransforms;
